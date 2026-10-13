@@ -425,3 +425,27 @@ select:focus {
     font-size: 19px;
   }
 }
+
+/* レア度：高級（薄緑背景・緑文字） */
+.tag-rarity-high {
+  background-color: #E3F3E5;
+  color: #397849;
+}
+
+/* レア度：レア（薄青背景・青文字） */
+.tag-rarity-rare {
+  background-color: #E2F0FF;
+  color: #2865A8;
+}
+
+/* レア度：英雄（薄紫背景・紫文字） */
+.tag-rarity-hero {
+  background-color: #F0E5FF;
+  color: #7946A8;
+}
+
+/* 分類：薄灰色背景・黒文字 */
+.tag-category {
+  background-color: #EEEEEE;
+  color: #222222;
+}
