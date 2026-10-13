@@ -403,3 +403,10 @@ select:focus {
     font-size: 19px;
   }
 }
+
+.skin-image {
+  width: 122px;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
