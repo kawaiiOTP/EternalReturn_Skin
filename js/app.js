@@ -78,14 +78,12 @@ function parseCSV(text) {
   });
 }
 
-// 実装日を並べ替え用の数値に変換する
-// 対応例：2026-10-13 / 2026/10/13 / 2026.10.13 / 2026年10月13日
+// 実装日を並べ替え用の数値に変換
+// 対応例：2026-10-13、2026/10/13、2026.10.13、2026年10月13日
 function parseDate(value) {
   if (!value) return null;
 
-  const text = String(value).trim();
-
-  const match = text.match(
+  const match = String(value).trim().match(
     /^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?$/
   );
 
@@ -97,7 +95,6 @@ function parseDate(value) {
 
   const date = new Date(year, month - 1, day);
 
-  // 実在しない日付は未登録扱い
   if (
     date.getFullYear() !== year ||
     date.getMonth() !== month - 1 ||
@@ -116,6 +113,8 @@ const unique = values =>
 
 // セレクトボックスに選択肢を追加
 function populateSelect(select, values) {
+  if (!select) return;
+
   select.replaceChildren();
 
   const defaultOption = document.createElement("option");
@@ -131,11 +130,26 @@ function populateSelect(select, values) {
   });
 }
 
-// タグを作る
-function createTag(text) {
+// タグを作る：レア度・分類ごとにクラスを設定
+function createTag(text, type = "") {
   const tag = document.createElement("span");
   tag.className = "tag";
   tag.textContent = text || "未分類";
+
+  if (type === "rarity") {
+    if (text === "高級") {
+      tag.classList.add("tag-rarity-high");
+    } else if (text === "レア") {
+      tag.classList.add("tag-rarity-rare");
+    } else if (text === "英雄") {
+      tag.classList.add("tag-rarity-hero");
+    }
+  }
+
+  if (type === "category") {
+    tag.classList.add("tag-category");
+  }
+
   return tag;
 }
 
@@ -210,9 +224,20 @@ function createCard(skin) {
   const tags = document.createElement("div");
   tags.className = "tags";
 
-  [skin.series, skin.rarity, skin.category]
-    .filter(Boolean)
-    .forEach(value => tags.appendChild(createTag(value)));
+  // シリーズ：既存のタグ色
+  if (skin.series) {
+    tags.appendChild(createTag(skin.series));
+  }
+
+  // レア度：高級・レア・英雄で色分け
+  if (skin.rarity) {
+    tags.appendChild(createTag(skin.rarity, "rarity"));
+  }
+
+  // 分類：常に薄灰色
+  if (skin.category) {
+    tags.appendChild(createTag(skin.category, "category"));
+  }
 
   const date = document.createElement("div");
   date.className = "skin-date";
@@ -226,7 +251,7 @@ function createCard(skin) {
   return card;
 }
 
-// スキンを絞り込み、並べ替えて表示する
+// スキンを絞り込み、並べ替えて表示
 function render() {
   if (
     !grid ||
@@ -270,7 +295,7 @@ function render() {
     const dateA = parseDate(a.releaseDate);
     const dateB = parseDate(b.releaseDate);
 
-    // 日付未登録・読み取れない日付は常に先頭
+    // 日付未登録・形式不明は常に先頭
     if (dateA === null && dateB !== null) return -1;
     if (dateA !== null && dateB === null) return 1;
 
@@ -307,7 +332,7 @@ function render() {
   }
 }
 
-// CSVを読み込んで初期設定する
+// CSVを読み込んで初期設定
 async function init() {
   if (!grid || !emptyMessage || !resultCount) {
     console.error(
@@ -331,14 +356,13 @@ async function init() {
     const csvText = await response.text();
     const parsedSkins = parseCSV(csvText);
 
-    // 必須項目があるデータだけ表示する
     skins = parsedSkins.filter(skin =>
       skin.character && skin.skinName
     );
 
     if (skins.length === 0) {
       throw new Error(
-        "スキンデータがありません。CSVの1行目の見出しを確認してください。"
+        "スキンデータがありません。CSVの1行目の列名を確認してください。"
       );
     }
 
@@ -365,11 +389,11 @@ async function init() {
     resultCount.textContent = "0件";
     emptyMessage.hidden = false;
     emptyMessage.textContent =
-      "データを読み込めませんでした。スプレッドシートの公開設定、CSVのURL、列名を確認してください。";
+      "データを読み込めませんでした。公開設定、CSVのURL、列名を確認してください。";
   }
 }
 
-// 検索・絞り込み・並べ替えの操作
+// 検索・絞り込み・並べ替え
 [
   search,
   characterFilter,
