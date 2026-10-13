@@ -256,7 +256,37 @@ function createCard(skin) {
   return card;
 }
 
-// スキンを絞り込み、並べ替えて表示
+
+/* 次の50件を表示 */
+function loadNextBatch() {
+  if (!grid) return;
+
+  const nextCount = Math.min(
+    displayedCount + PAGE_SIZE,
+    filteredSkins.length
+  );
+
+  const fragment = document.createDocumentFragment();
+
+  for (let i = displayedCount; i < nextCount; i++) {
+    fragment.appendChild(createCard(filteredSkins[i]));
+  }
+
+  grid.appendChild(fragment);
+  displayedCount = nextCount;
+
+  if (resultCount) {
+    resultCount.textContent =
+      `${displayedCount} / ${filteredSkins.length}件`;
+  }
+
+  if (loadAllButton) {
+    loadAllButton.hidden =
+      displayedCount >= filteredSkins.length;
+  }
+}
+
+/* スキンを絞り込み、並べ替えて表示 */
 function render() {
   if (
     !grid ||
@@ -300,75 +330,41 @@ function render() {
     const dateA = parseDate(a.releaseDate);
     const dateB = parseDate(b.releaseDate);
 
-    // 日付未登録・形式不明は常に先頭
+    // 日付未登録・形式不明は先頭
     if (dateA === null && dateB !== null) return -1;
     if (dateA !== null && dateB === null) return 1;
 
-    // 新しい順
     if (sort.value === "newest") {
       return (dateB ?? 0) - (dateA ?? 0);
     }
 
-    // 古い順
     if (sort.value === "oldest") {
       return (dateA ?? 0) - (dateB ?? 0);
     }
 
-    // キャラクター順
     if (sort.value === "character") {
       return (a.character || "").localeCompare(
         b.character || "", "ja"
       );
     }
 
-    // スキン名順
     return (a.skinName || "").localeCompare(
       b.skinName || "", "ja"
     );
   });
 
+  // 絞り込み結果を先頭から表示し直す
+  filteredSkins = filtered;
+  displayedCount = 0;
+  grid.replaceChildren();
 
-filteredSkins = filtered;
-displayedCount = 0;
+  emptyMessage.hidden = filtered.length !== 0;
 
-grid.replaceChildren();
-
-loadNextBatch();
-
-emptyMessage.hidden = filtered.length !== 0;
-
-if (filtered.length === 0) {
-  emptyMessage.textContent = "該当するスキンがありません";
-}
-
-
-/* 次の50件を表示 */
-function loadNextBatch() {
-  if (!grid) return;
-
-  const nextCount = Math.min(
-    displayedCount + PAGE_SIZE,
-    filteredSkins.length
-  );
-
-  const fragment = document.createDocumentFragment();
-
-  for (let i = displayedCount; i < nextCount; i++) {
-    fragment.appendChild(createCard(filteredSkins[i]));
+  if (filtered.length === 0) {
+    emptyMessage.textContent = "該当するスキンがありません";
   }
 
-  grid.appendChild(fragment);
-  displayedCount = nextCount;
-
-  if (resultCount) {
-    resultCount.textContent =
-      `${displayedCount} / ${filteredSkins.length}件`;
-  }
-
-  if (loadAllButton) {
-    loadAllButton.hidden =
-      displayedCount >= filteredSkins.length;
-  }
+  loadNextBatch();
 }
 
 /* すべて読み込むボタン */
