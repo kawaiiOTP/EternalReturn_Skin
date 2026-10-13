@@ -189,6 +189,7 @@ select:focus {
   justify-content: center;
   width: 122px;
   height: 160px;
+  margin: 0 auto;
   flex-shrink: 0;
   overflow: hidden;
   background: linear-gradient(145deg, #eaf0f8, #f7f8fb);
@@ -200,7 +201,7 @@ select:focus {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .skin-image.has-image {
