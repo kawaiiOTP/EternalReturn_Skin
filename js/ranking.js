@@ -238,4 +238,3 @@ rankingSearch.addEventListener("input", renderRanking);
 
 // 初回読み込み
 loadRankingData();
-```
