@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>実装待ちランキング | Eternal Return</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="index.html">SKIN ARCHIVE</a>
+    <nav>
+      <a class="nav-link" href="index.html">スキン図鑑</a>
+      <a class="nav-link active" href="ranking.html">実装待ちランキング</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="page-heading">
+      <p class="eyebrow">ETERNAL RETURN / RANKING</p>
+      <h1>実装待ちランキング</h1>
+      <p class="description">
+        最後のスキン実装から、どれくらいの日数が経過している？
+      </p>
+    </section>
+
+    <section class="filter-panel">
+      <label class="field">
+        <span>キャラクターを検索</span>
+        <input id="rankingSearch" type="search"
+          placeholder="キャラクター名">
+      </label>
+      <p class="help-text">
+        最後にスキンが実装された日からの経過日数が長い順です。
+      </p>
+    </section>
+
+    <div class="result-bar">
+      <span id="rankingCount">0キャラクター</span>
+      <span id="rankingDate"></span>
+    </div>
+
+    <section id="rankingList" class="ranking-list"></section>
+    <p id="rankingEmpty" class="empty-message" hidden>
+      該当するキャラクターがありません。
+    </p>
+
+    <p class="help-text">
+      ※仮データを使用しています。実際の実装日とは異なります。
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <p>Unofficial fan-made skin archive.</p>
+    <p>Not affiliated with Eternal Return.</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/ranking.js"></script>
+</body>
+</html>
