@@ -1,0 +1,101 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>スキン図鑑 | Eternal Return</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="index.html">SKIN ARCHIVE</a>
+    <nav>
+      <a class="nav-link active" href="index.html">スキン図鑑</a>
+      <a class="nav-link" href="ranking.html">実装待ちランキング</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="page-heading">
+      <p class="eyebrow">ETERNAL RETURN / COLLECTION</p>
+      <h1>スキン図鑑</h1>
+      <p class="description">お気に入りのスキンを探そう。</p>
+    </section>
+
+    <section class="filter-panel">
+      <label class="field">
+        <span>キーワード</span>
+        <input id="search" type="search"
+          placeholder="キャラクター名・スキン名・シリーズ名">
+      </label>
+
+      <div class="filter-grid">
+        <label class="field">
+          <span>キャラクター</span>
+          <select id="characterFilter">
+            <option value="">すべて</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>シリーズ名</span>
+          <select id="seriesFilter">
+            <option value="">すべて</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>スキン分類</span>
+          <select id="categoryFilter">
+            <option value="">すべて</option>
+            <option>シーズンパス</option>
+            <option>シーズンパック</option>
+            <option>製作所</option>
+            <option>ショップ販売</option>
+            <option>イベント</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>並べ替え</span>
+          <select id="sort">
+            <option value="newest">実装日が新しい順</option>
+            <option value="oldest">実装日が古い順</option>
+            <option value="character">キャラクター名順</option>
+            <option value="name">スキン名順</option>
+          </select>
+        </label>
+      </div>
+
+      <button id="resetFilters" class="button button-light"
+        type="button">条件をリセット</button>
+    </section>
+
+    <div class="result-bar">
+      <span id="resultCount">0件</span>
+    </div>
+
+    <section id="skinGrid" class="skin-grid"
+      aria-label="スキン一覧"></section>
+    <p id="emptyMessage" class="empty-message" hidden>
+      該当するスキンがありません。
+    </p>
+
+    <dialog id="imageDialog" class="image-dialog">
+      <button id="closeDialog" class="dialog-close"
+        type="button" aria-label="閉じる">×</button>
+      <img id="fullImage" alt="">
+      <p id="dialogCaption"></p>
+    </dialog>
+  </main>
+
+  <footer class="site-footer">
+    <p>Unofficial fan-made skin archive.</p>
+    <p>Not affiliated with Eternal Return.</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
