@@ -1,27 +1,115 @@
+```javascript
+const RANKING_CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOx6fV8tgiG9IVDIOE3BPNDKEyUpCbd70ROzu8HWTIKIPl_TlXZluTd-jrn5as_15-DZtlINiSNDqJ/pub?gid=0&single=true&output=csv";
 
-const skins = window.SKIN_DATA || [];
 const rankingList = document.getElementById("rankingList");
 const rankingSearch = document.getElementById("rankingSearch");
 const rankingCount = document.getElementById("rankingCount");
 const rankingDate = document.getElementById("rankingDate");
 const rankingEmpty = document.getElementById("rankingEmpty");
 
+let skins = [];
+
+// CSVの1行を解析する
+function parseRankingCSVLine(line) {
+  const result = [];
+  let value = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        value += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === "," && !inQuotes) {
+      result.push(value.trim());
+      value = "";
+    } else {
+      value += char;
+    }
+  }
+
+  result.push(value.trim());
+  return result;
+}
+
+// CSV全体をオブジェクト配列に変換する
+function parseRankingCSV(csv) {
+  const lines = csv
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .filter(line => line.trim() !== "");
+
+  if (lines.length < 2) return [];
+
+  const headers = parseRankingCSVLine(lines[0]);
+
+  return lines.slice(1).map(line => {
+    const values = parseRankingCSVLine(line);
+    const item = {};
+
+    headers.forEach((header, index) => {
+      item[header] = values[index] ?? "";
+    });
+
+    return item;
+  });
+}
+
+// 実装日の文字列を日付として解析する
+function parseRankingDate(value) {
+  if (!value) return null;
+
+  const match = value.trim().match(
+    /^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?$/
+  );
+
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  // 存在しない日付を除外する
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+// キャラクターごとに最新のスキンを取得する
 function getRanking() {
   const latestByCharacter = new Map();
 
   skins.forEach(skin => {
-    if (!skin.character || !skin.releaseDate) return;
+    const character = (skin.character || "").trim();
+    const skinName = (skin.skinName || "").trim();
+    const releaseDate = (skin.releaseDate || "").trim();
 
-    const date = new Date(`${skin.releaseDate}T00:00:00Z`);
-    if (Number.isNaN(date.getTime())) return;
+    if (!character || !releaseDate) return;
 
-    const previous = latestByCharacter.get(skin.character);
+    const date = parseRankingDate(releaseDate);
+    if (!date) return;
+
+    const previous = latestByCharacter.get(character);
 
     if (!previous || date > previous.date) {
-      latestByCharacter.set(skin.character, {
-        character: skin.character,
-        skinName: skin.skinName,
-        releaseDate: skin.releaseDate,
+      latestByCharacter.set(character, {
+        character,
+        skinName,
+        releaseDate,
         date
       });
     }
@@ -50,8 +138,11 @@ function getRanking() {
     );
 }
 
+// ランキングを画面に表示する
 function renderRanking() {
-  const keyword = rankingSearch.value.trim().toLocaleLowerCase();
+  const keyword = rankingSearch.value
+    .trim()
+    .toLocaleLowerCase();
 
   const ranking = getRanking().filter(item =>
     item.character.toLocaleLowerCase().includes(keyword)
@@ -76,7 +167,7 @@ function renderRanking() {
     const detail = document.createElement("div");
     detail.className = "rank-detail";
     detail.textContent =
-      `最新スキン：${item.skinName} / 実装日：${item.releaseDate}`;
+      `最新スキン：${item.skinName || "名称未登録"} / 実装日：${item.releaseDate}`;
 
     info.append(name, detail);
 
@@ -101,5 +192,50 @@ function renderRanking() {
   rankingEmpty.hidden = ranking.length !== 0;
 }
 
+// CSVを読み込む
+async function loadRankingData() {
+  rankingList.replaceChildren();
+
+  const loading = document.createElement("p");
+  loading.textContent = "ランキングを読み込み中…";
+  rankingList.appendChild(loading);
+
+  try {
+    const response = await fetch(RANKING_CSV_URL, {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`CSVの取得に失敗しました：${response.status}`);
+    }
+
+    const csv = await response.text();
+    skins = parseRankingCSV(csv);
+
+    if (skins.length === 0) {
+      throw new Error("CSVにスキンデータがありません。");
+    }
+
+    renderRanking();
+  } catch (error) {
+    console.error("ランキングの読み込みエラー:", error);
+
+    rankingList.replaceChildren();
+
+    const message = document.createElement("p");
+    message.textContent =
+      "ランキングを読み込めませんでした。スプレッドシートの公開設定と列名を確認してください。";
+
+    rankingList.appendChild(message);
+    rankingCount.textContent = "読み込み失敗";
+    rankingDate.textContent = "";
+    rankingEmpty.hidden = true;
+  }
+}
+
+// 検索するたびにランキングを更新
 rankingSearch.addEventListener("input", renderRanking);
-renderRanking();
+
+// 初回読み込み
+loadRankingData();
+```
