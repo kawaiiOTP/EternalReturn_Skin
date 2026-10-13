@@ -331,17 +331,23 @@ select:focus {
   margin: 3px;
 }
 
+
 /* 画像拡大ダイアログ */
 .image-dialog {
-  position: relative;
+  position: fixed;
+  inset: 0;
+  margin: auto;
   width: min(900px, calc(100% - 28px));
+  max-width: calc(100% - 28px);
   max-height: 90vh;
+  overflow-y: auto;
   padding: 22px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
 }
+
 
 .image-dialog::backdrop {
   background: #151b29cc;
@@ -448,4 +454,38 @@ select:focus {
 .tag-category {
   background-color: #EEEEEE;
   color: #222222;
+}
+
+
+/* スマートフォン：画像ポップアップ */
+@media (max-width: 520px) {
+  .image-dialog {
+    width: calc(100% - 24px);
+    max-width: none;
+    max-height: 85dvh;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .image-dialog img {
+    max-width: 100%;
+    max-height: 65dvh;
+    width: auto;
+    height: auto;
+  }
+
+  .dialog-close {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin-left: auto;
+    margin-bottom: 4px;
+    background: var(--surface);
+  }
+
+  .image-dialog p {
+    margin: 8px 0 4px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
 }
