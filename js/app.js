@@ -3,6 +3,11 @@ const CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOx6fV8tgiG9IVDIOE3BPNDKEyUpCbd70ROzu8HWTIKIPl_TlXZluTd-jrn5as_15-DZtlINiSNDqJ/pub?gid=0&single=true&output=csv";
 
 let skins = [];
+let filteredSkins = [];
+let displayedCount = 0;
+const PAGE_SIZE = 50;
+const loadAllButton = document.getElementById("loadAllButton");
+
 
 const grid = document.getElementById("skinGrid");
 const search = document.getElementById("search");
@@ -322,14 +327,79 @@ function render() {
     );
   });
 
-  grid.replaceChildren(...filtered.map(createCard));
 
-  resultCount.textContent = `${filtered.length}件`;
-  emptyMessage.hidden = filtered.length !== 0;
+filteredSkins = filtered;
+displayedCount = 0;
 
-  if (filtered.length === 0) {
-    emptyMessage.textContent = "該当するスキンがありません";
+grid.replaceChildren();
+
+loadNextBatch();
+
+emptyMessage.hidden = filtered.length !== 0;
+
+if (filtered.length === 0) {
+  emptyMessage.textContent = "該当するスキンがありません";
+}
+
+
+/* 次の50件を表示 */
+function loadNextBatch() {
+  if (!grid) return;
+
+  const nextCount = Math.min(
+    displayedCount + PAGE_SIZE,
+    filteredSkins.length
+  );
+
+  const fragment = document.createDocumentFragment();
+
+  for (let i = displayedCount; i < nextCount; i++) {
+    fragment.appendChild(createCard(filteredSkins[i]));
   }
+
+  grid.appendChild(fragment);
+  displayedCount = nextCount;
+
+  if (resultCount) {
+    resultCount.textContent =
+      `${displayedCount} / ${filteredSkins.length}件`;
+  }
+
+  if (loadAllButton) {
+    loadAllButton.hidden =
+      displayedCount >= filteredSkins.length;
+  }
+}
+
+/* すべて読み込むボタン */
+if (loadAllButton) {
+  loadAllButton.addEventListener("click", () => {
+    while (displayedCount < filteredSkins.length) {
+      loadNextBatch();
+    }
+  });
+}
+
+/* 一覧の下まで来たら自動で次の50件を読み込む */
+if (grid && "IntersectionObserver" in window) {
+  const sentinel = document.createElement("div");
+  sentinel.setAttribute("aria-hidden", "true");
+  sentinel.style.height = "1px";
+
+  grid.insertAdjacentElement("afterend", sentinel);
+
+  const observer = new IntersectionObserver(entries => {
+    if (
+      entries.some(entry => entry.isIntersecting) &&
+      displayedCount < filteredSkins.length
+    ) {
+      loadNextBatch();
+    }
+  }, {
+    rootMargin: "300px"
+  });
+
+  observer.observe(sentinel);
 }
 
 // CSVを読み込んで初期設定
