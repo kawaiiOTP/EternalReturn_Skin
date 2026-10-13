@@ -9,6 +9,7 @@ const search = document.getElementById("search");
 const characterFilter = document.getElementById("characterFilter");
 const seriesFilter = document.getElementById("seriesFilter");
 const categoryFilter = document.getElementById("categoryFilter");
+const rarityFilter = document.getElementById("rarityFilter");
 const sort = document.getElementById("sort");
 const resultCount = document.getElementById("resultCount");
 const emptyMessage = document.getElementById("emptyMessage");
@@ -234,7 +235,7 @@ function createCard(skin) {
     tags.appendChild(createTag(skin.rarity, "rarity"));
   }
 
-  // 分類：常に薄灰色
+  // 分類：薄灰色
   if (skin.category) {
     tags.appendChild(createTag(skin.category, "category"));
   }
@@ -259,6 +260,7 @@ function render() {
     !characterFilter ||
     !seriesFilter ||
     !categoryFilter ||
+    !rarityFilter ||
     !sort ||
     !resultCount ||
     !emptyMessage
@@ -287,7 +289,9 @@ function render() {
       (!seriesFilter.value ||
         skin.series === seriesFilter.value) &&
       (!categoryFilter.value ||
-        skin.category === categoryFilter.value)
+        skin.category === categoryFilter.value) &&
+      (!rarityFilter.value ||
+        skin.rarity === rarityFilter.value)
     );
   });
 
@@ -295,7 +299,7 @@ function render() {
     const dateA = parseDate(a.releaseDate);
     const dateB = parseDate(b.releaseDate);
 
-    // 日付未登録・形式不明は常に先頭
+    // 日付未登録・形式不明は先頭
     if (dateA === null && dateB !== null) return -1;
     if (dateA !== null && dateB === null) return 1;
 
@@ -309,7 +313,7 @@ function render() {
       return (dateA ?? 0) - (dateB ?? 0);
     }
 
-    // キャラクター順
+    // キャラクター名順
     if (sort.value === "character") {
       return (a.character || "").localeCompare(
         b.character || "", "ja"
@@ -317,9 +321,13 @@ function render() {
     }
 
     // スキン名順
-    return (a.skinName || "").localeCompare(
-      b.skinName || "", "ja"
-    );
+    if (sort.value === "name") {
+      return (a.skinName || "").localeCompare(
+        b.skinName || "", "ja"
+      );
+    }
+
+    return 0;
   });
 
   grid.replaceChildren(...filtered.map(createCard));
@@ -381,6 +389,11 @@ async function init() {
       skins.map(skin => skin.category)
     );
 
+    populateSelect(
+      rarityFilter,
+      skins.map(skin => skin.rarity)
+    );
+
     render();
   } catch (error) {
     console.error("スキンデータの読み込みに失敗しました", error);
@@ -399,6 +412,7 @@ async function init() {
   characterFilter,
   seriesFilter,
   categoryFilter,
+  rarityFilter,
   sort
 ].forEach(control => {
   if (!control) return;
@@ -416,6 +430,7 @@ if (resetButton) {
     characterFilter.value = "";
     seriesFilter.value = "";
     categoryFilter.value = "";
+    rarityFilter.value = "";
     sort.value = "newest";
     render();
   });
