@@ -14,8 +14,14 @@
   box-sizing: border-box;
 }
 
+html,
 body {
+  max-width: 100%;
   margin: 0;
+  overflow-x: clip;
+}
+
+body {
   background: var(--page);
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI",
@@ -162,10 +168,13 @@ select:focus {
   font-size: 13px;
 }
 
+/* スキンカード：画面幅に合わせて列数・カード幅を調整 */
 .skin-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
+  width: 100%;
+  min-width: 0;
 }
 
 .skin-card {
@@ -182,15 +191,13 @@ select:focus {
   box-shadow: 0 8px 24px #293b5710;
 }
 
-/* スキン画像：122 × 160px */
+/* スキン画像：390 × 576px の比率 */
 .skin-image {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 122px;
-  height: 160px;
-  margin: 0 auto;
-  flex-shrink: 0;
+  width: 100%;
+  aspect-ratio: 390 / 576;
   overflow: hidden;
   background: linear-gradient(145deg, #eaf0f8, #f7f8fb);
   color: #a1aec1;
@@ -201,7 +208,7 @@ select:focus {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .skin-image.has-image {
