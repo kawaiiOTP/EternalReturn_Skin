@@ -43,6 +43,7 @@ function parseCSV(text) {
       if (char === "\r" && next === "\n") i++;
 
       row.push(cell);
+
       if (row.some(value => value.trim() !== "")) {
         rows.push(row);
       }
@@ -56,6 +57,7 @@ function parseCSV(text) {
 
   if (cell !== "" || row.length > 0) {
     row.push(cell);
+
     if (row.some(value => value.trim() !== "")) {
       rows.push(row);
     }
@@ -76,10 +78,43 @@ function parseCSV(text) {
   });
 }
 
+// 実装日を並べ替え用の数値に変換する
+// 対応例：2026-10-13 / 2026/10/13 / 2026.10.13 / 2026年10月13日
+function parseDate(value) {
+  if (!value) return null;
+
+  const text = String(value).trim();
+
+  const match = text.match(
+    /^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?$/
+  );
+
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const date = new Date(year, month - 1, day);
+
+  // 実在しない日付は未登録扱い
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date.getTime();
+}
+
+// セレクトボックス用の重複しないリスト
 const unique = values =>
   [...new Set(values.filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "ja"));
 
+// セレクトボックスに選択肢を追加
 function populateSelect(select, values) {
   select.replaceChildren();
 
@@ -96,6 +131,7 @@ function populateSelect(select, values) {
   });
 }
 
+// タグを作る
 function createTag(text) {
   const tag = document.createElement("span");
   tag.className = "tag";
@@ -103,6 +139,7 @@ function createTag(text) {
   return tag;
 }
 
+// スキンカードを作る
 function createCard(skin) {
   const card = document.createElement("article");
   card.className = "skin-card";
@@ -117,7 +154,7 @@ function createCard(skin) {
     img.loading = "lazy";
 
     img.addEventListener("error", () => {
-      imageArea.classList.remove("has-image");
+      imageArea.classList.remove("has-image", "clickable");
       imageArea.replaceChildren();
       imageArea.textContent = "画像準備中";
     });
@@ -134,16 +171,16 @@ function createCard(skin) {
       const openImage = () => {
         const dialog = document.getElementById("imageDialog");
         const fullImage = document.getElementById("fullImage");
+        const caption = document.getElementById("dialogCaption");
 
-        if (!dialog || !fullImage) return;
+        if (!dialog || !fullImage || !caption) return;
 
         fullImage.src = skin.full;
         fullImage.alt = skin.skinName || "スキン画像";
+        caption.textContent =
+          `${skin.character || ""} / ${skin.skinName || ""}`;
 
-        document.getElementById("dialogCaption").textContent =
-          `${skin.character} / ${skin.skinName}`;
-
-        dialog.showModal();
+        if (!dialog.open) dialog.showModal();
       };
 
       imageArea.addEventListener("click", openImage);
@@ -189,7 +226,22 @@ function createCard(skin) {
   return card;
 }
 
+// スキンを絞り込み、並べ替えて表示する
 function render() {
+  if (
+    !grid ||
+    !search ||
+    !characterFilter ||
+    !seriesFilter ||
+    !categoryFilter ||
+    !sort ||
+    !resultCount ||
+    !emptyMessage
+  ) {
+    console.error("HTML内に必要な表示要素が見つかりません。");
+    return;
+  }
+
   const keyword = search.value.trim().toLocaleLowerCase();
 
   let filtered = skins.filter(skin => {
@@ -215,24 +267,31 @@ function render() {
   });
 
   filtered.sort((a, b) => {
+    const dateA = parseDate(a.releaseDate);
+    const dateB = parseDate(b.releaseDate);
+
+    // 日付未登録・読み取れない日付は常に先頭
+    if (dateA === null && dateB !== null) return -1;
+    if (dateA !== null && dateB === null) return 1;
+
+    // 新しい順
     if (sort.value === "newest") {
-      return (b.releaseDate || "").localeCompare(
-        a.releaseDate || ""
-      );
+      return (dateB ?? 0) - (dateA ?? 0);
     }
 
+    // 古い順
     if (sort.value === "oldest") {
-      return (a.releaseDate || "9999").localeCompare(
-        b.releaseDate || "9999"
-      );
+      return (dateA ?? 0) - (dateB ?? 0);
     }
 
+    // キャラクター順
     if (sort.value === "character") {
       return (a.character || "").localeCompare(
         b.character || "", "ja"
       );
     }
 
+    // スキン名順
     return (a.skinName || "").localeCompare(
       b.skinName || "", "ja"
     );
@@ -248,7 +307,15 @@ function render() {
   }
 }
 
+// CSVを読み込んで初期設定する
 async function init() {
+  if (!grid || !emptyMessage || !resultCount) {
+    console.error(
+      "必要なHTML要素が見つかりません。HTMLのIDを確認してください。"
+    );
+    return;
+  }
+
   emptyMessage.hidden = false;
   emptyMessage.textContent = "スキンデータを読み込み中…";
 
@@ -262,12 +329,17 @@ async function init() {
     }
 
     const csvText = await response.text();
-    skins = parseCSV(csvText).filter(skin =>
+    const parsedSkins = parseCSV(csvText);
+
+    // 必須項目があるデータだけ表示する
+    skins = parsedSkins.filter(skin =>
       skin.character && skin.skinName
     );
 
     if (skins.length === 0) {
-      throw new Error("スキンデータがありません");
+      throw new Error(
+        "スキンデータがありません。CSVの1行目の見出しを確認してください。"
+      );
     }
 
     populateSelect(
@@ -288,31 +360,52 @@ async function init() {
     render();
   } catch (error) {
     console.error("スキンデータの読み込みに失敗しました", error);
+
     grid.replaceChildren();
     resultCount.textContent = "0件";
     emptyMessage.hidden = false;
     emptyMessage.textContent =
-      "データを読み込めませんでした。公開設定とCSVのURLを確認してください。";
+      "データを読み込めませんでした。スプレッドシートの公開設定、CSVのURL、列名を確認してください。";
   }
 }
 
-[search, characterFilter, seriesFilter, categoryFilter, sort]
-  .forEach(control => {
-    control.addEventListener("input", render);
-    control.addEventListener("change", render);
+// 検索・絞り込み・並べ替えの操作
+[
+  search,
+  characterFilter,
+  seriesFilter,
+  categoryFilter,
+  sort
+].forEach(control => {
+  if (!control) return;
+
+  control.addEventListener("input", render);
+  control.addEventListener("change", render);
+});
+
+// 絞り込みをリセット
+const resetButton = document.getElementById("resetFilters");
+
+if (resetButton) {
+  resetButton.addEventListener("click", () => {
+    search.value = "";
+    characterFilter.value = "";
+    seriesFilter.value = "";
+    categoryFilter.value = "";
+    sort.value = "newest";
+    render();
   });
+}
 
-document.getElementById("resetFilters").addEventListener("click", () => {
-  search.value = "";
-  characterFilter.value = "";
-  seriesFilter.value = "";
-  categoryFilter.value = "";
-  sort.value = "newest";
-  render();
-});
+// 拡大画像を閉じる
+const closeButton = document.getElementById("closeDialog");
+const imageDialog = document.getElementById("imageDialog");
 
-document.getElementById("closeDialog").addEventListener("click", () => {
-  document.getElementById("imageDialog").close();
-});
+if (closeButton && imageDialog) {
+  closeButton.addEventListener("click", () => {
+    imageDialog.close();
+  });
+}
 
+// 起動
 init();
