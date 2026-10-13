@@ -16,12 +16,13 @@
 
 html,
 body {
+  width: 100%;
   max-width: 100%;
   margin: 0;
-  overflow-x: clip;
 }
 
 body {
+  overflow-x: clip;
   background: var(--page);
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI",
@@ -168,7 +169,7 @@ select:focus {
   font-size: 13px;
 }
 
-/* スキンカード：画面幅に合わせて列数・カード幅を調整 */
+/* スキン一覧 */
 .skin-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -177,6 +178,7 @@ select:focus {
   min-width: 0;
 }
 
+/* カード全体 */
 .skin-card {
   min-width: 0;
   overflow: hidden;
@@ -191,7 +193,7 @@ select:focus {
   box-shadow: 0 8px 24px #293b5710;
 }
 
-/* スキン画像：390 × 576px の比率 */
+/* 画像：元画像390 × 576pxの比率を維持 */
 .skin-image {
   display: flex;
   align-items: center;
@@ -204,6 +206,7 @@ select:focus {
   font-size: 13px;
 }
 
+/* 画像を枠いっぱいに表示 */
 .skin-image img {
   display: block;
   width: 100%;
@@ -215,7 +218,9 @@ select:focus {
   cursor: zoom-in;
 }
 
+/* 画像の下のスキン情報 */
 .skin-info {
+  min-width: 0;
   padding: 13px;
 }
 
@@ -228,6 +233,7 @@ select:focus {
 .skin-character {
   color: var(--muted);
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .tags {
@@ -257,6 +263,7 @@ select:focus {
   text-align: center;
 }
 
+/* ランキング */
 .ranking-list {
   display: flex;
   flex-direction: column;
@@ -311,6 +318,7 @@ select:focus {
   font-size: 11px;
 }
 
+/* フッター */
 .site-footer {
   padding: 24px 16px;
   border-top: 1px solid var(--border);
@@ -323,6 +331,7 @@ select:focus {
   margin: 3px;
 }
 
+/* 画像拡大ダイアログ */
 .image-dialog {
   position: relative;
   width: min(900px, calc(100% - 28px));
@@ -361,6 +370,7 @@ select:focus {
   cursor: pointer;
 }
 
+/* タブレット */
 @media (max-width: 800px) {
   .filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -372,6 +382,7 @@ select:focus {
   }
 }
 
+/* スマートフォン */
 @media (max-width: 520px) {
   .site-header {
     align-items: flex-start;
